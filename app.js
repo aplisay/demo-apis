@@ -70,6 +70,13 @@ app.post('/followup_action', async (req, res) => {
   res.json(results);
 });
 
+app.post('/resolution', async (req, res) => {
+  const { id, action } = req.body;
+
+  res.json({ok: true});
+});
+
+
 
 // Start the server
 const PORT = process.env.PORT || 3010;
