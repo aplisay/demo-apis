@@ -10,64 +10,66 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-let Schedules = axios.get('https://www.emfcamp.org/schedule/2024.json');
+let slots = [
+  new Date('2025-01-24 09:00:00'),
+  new Date('2025-01-24 10:00:00'),
+  new Date('2025-01-24 11:00:00'),
+  new Date('2025-01-27 10:00:00'),
+  new Date('2025-01-27 11:00:00'),
+  new Date('2025-01-27 12:00:00'),
+  new Date('2025-02-07 12:00:00'),
+  new Date('2025-02-07 13:00:00'),
+  new Date('2025-03-07 09:00:00'),
+];
 
-let Villages = axios.get('https://www.emfcamp.org/api/villages');
+let actions = [
+  { type: 'book', explanation: 'the doctor has asked me to get you to come in for a new appointment', action: 'get the user to book an appointment' },
+  {
+    type: 'sample', explanation: 'we sent you a stool sample kit recently, but the lab has not received it yet', 
+    action: 'find out why the user has not sent back the sample, offer to send a new one if it was lost or damaged'
+  }
+]
 
 
 
 // Schedule endpoint
-app.get('/schedule', async (req, res) => {
-  const { search, upcoming } = req.query;
-  let now = new Date();
-  let nextHour = now.valueOf() + (60 * 60 * 1000);
+app.post('/auth', async (req, res) => {
+  const { first, middle, last, year, month } = req.body;
+  const id = Math.round(Math.random() * 1000000000)
 
-  let { data: schedules } = await Schedules;
-  let { data: villages } = await Villages;
-
-  let future = schedules
-    .filter(talk => !talk.end_date || (new Date(`${talk.end_date} UTC+1`).valueOf()) > now.valueOf());
-  if (search) {
-    let searches = new RegExp(`(${search.replace(/,/g, "|")})`, "i");
-    const results = future
-      .filter((talk) =>
-        (talk.title + talk.speaker + talk.description).match(searches));
-    return res.json(results);
-  }
-  else if (upcoming) {
-    return (
-      res.json(
-        future.filter((talk) => {
-          let start = talk.start_date && (new Date(`${talk.start_date} UTC+1`)).valueOf();
-          return start && start < nextHour && start > now;
-        })
-      )
-    );
-
-
-
-  }
-
-  return res.json(future);
+  return res.json({id});
 });
 
 // Village endpoint
-app.get('/villages', async (req, res) => {
-  const { search } = req.query;
+app.post('/free_slots', async (req, res) => {
+  const { id } = req.body;
 
-  let { data: schedules } = await Schedules;
-  let { data: villages } = await Villages;
+  res.json(slots);
+});
 
-  if (search) {
-    let searches = new RegExp(`(${search.replace(/,/g, "|")})`, "i");
-    const results = villages.filter((village) =>
-      (village.name + village.description).match(searches));
+app.post('/confirm_slot', async (req, res) => {
+  const { slot } = req.body;
 
-    return res.json(results);
+  const date = new Date(slot);
+  slots = slots.filter(s => s.getTime() !== date.getTime())
+
+  const results = {
+    response: 'Thank you, your appointment at ${date} has been confirmed.',
+    helpful_info: 'Please make sure you arrive in plenty of time to find your way to the department, and bring your journal with you'
   }
 
-  res.json(villages);
+  res.json(results);
 });
+
+app.post('/followup_action', async (req, res) => {
+  const { id } = req.body;
+
+
+
+  const results = actions[1];
+  res.json(results);
+});
+
 
 // Start the server
 const PORT = process.env.PORT || 3010;

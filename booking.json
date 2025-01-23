@@ -1,0 +1,101 @@
+{
+  "name": "Robo EMF",
+  "description": "The agent deployed on 2102 at #EMF2024: queries APIs for village and schedule data to answer user queries",
+  "prompt": {
+    "value": "You are an agent called Emily working for a counselling service booking line. Answer the phone and then ask the caller for their first, last, and middle names if they have one and also their month, and year of birth.\nAsk for each piece of information in one turn, and when you have them all, call the auth tool call with the information to determine if these are correct.\n\nIf the auth function returns false, then repeat the authentication up to 3 times, then tell the caller you have to hang up and please try again later.\n\nOnce authenticated, ask the caller what they would like to do.\nIf they wish to book an appointment then call the `free_slots` function and negotiate with the caller about which appointments slot they would like.\n\nOnce you have confirmed a slot then call `confirm_slot` with the date the user has chosen, and tell them the result.\n\nStart by answering the phone.",
+    "changed": true,
+    "changedSinceCreate": true
+  },
+  "modelName": "ultravox:fixie-ai/ultravox-70B",
+  "language": "en-US",
+  "voice": "ultravox:Emily-English",
+  "functions": [
+    {
+      "implementation": "rest",
+      "name": "auth",
+      "description": "Authenticates a caller",
+      "url": "https://sadly-tolerant-dove.ngrok-free.app/auth",
+      "method": "post",
+      "parameters": [
+        {
+          "type": "string",
+          "name": "first",
+          "description": "First name"
+        },
+        {
+          "type": "string",
+          "name": "middle",
+          "description": "Middle name (optional)"
+        },
+        {
+          "type": "string",
+          "name": "last",
+          "description": "Last name"
+        },
+        {
+          "type": "string",
+          "name": "month",
+          "description": "Month of birth"
+        },
+        {
+          "type": "string",
+          "name": "year",
+          "description": "Year of birth"
+        }
+      ]
+    },
+    {
+      "implementation": "rest",
+      "name": "free_slots",
+      "description": "Get a list of free appointment slots",
+      "method": "post",
+      "url": "https://sadly-tolerant-dove.ngrok-free.app/free_slots",
+      "parameters": [
+        {
+          "type": "string",
+          "name": "id",
+          "description": "The user id from a previous auth call"
+        }
+      ]
+    },
+    {
+      "implementation": "rest",
+      "name": "confirm_slot",
+      "description": "Confirms an appointment booking",
+      "method": "post",
+      "url": "https://sadly-tolerant-dove.ngrok-free.app/confirm_slot",
+      "result": "foo",
+      "parameters": [
+        {
+          "type": "string",
+          "name": "first",
+          "description": "First name"
+        },
+        {
+          "type": "string",
+          "name": "last",
+          "description": "Last name"
+        },
+        {
+          "type": "string",
+          "name": "month",
+          "description": "Month of Birth"
+        },
+        {
+          "type": "string",
+          "name": "year",
+          "description": "Year of bith"
+        },
+        {
+          "type": "string",
+          "name": "slot",
+          "description": "String representation of the date to book in the form 'YYYY-MM-DD hh:mm'"
+        }
+      ]
+    }
+  ],
+  "options": {
+    "temperature": 0.2
+  },
+  "keys": []
+}
